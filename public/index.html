@@ -59,5 +59,22 @@
 
     loadRoutes();
   </script>
+function showRoute(route) {
+  console.log("Rodo maršrutą:", route); // <– pridėk šitą
+
+  if (!route?.map?.summary_polyline) {
+    console.warn("Nėra summary_polyline šiam maršrutui:", route.name);
+    return;
+  }
+
+  if (currentLayer) map.removeLayer(currentLayer);
+
+  const latlngs = L.Polyline.fromEncoded(route.map.summary_polyline).getLatLngs();
+  console.log("Taškai žemėlapiui:", latlngs); // <– patikrinimui
+
+  currentLayer = L.polyline(latlngs, { color: "red", weight: 4 }).addTo(map);
+  map.fitBounds(currentLayer.getBounds());
+}
+
 </body>
 </html>
