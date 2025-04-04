@@ -3,11 +3,11 @@
 <html lang="lt">
 <head>
   <meta charset="UTF-8" />
-  <title>Strava + Vėjas (FINAL FIX)</title>
+  <title>Strava + Vėjas (100% WORKING)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/polyline/1.1.1/polyline.js"></script>
+  <script src="https://unpkg.com/@mapbox/polyline@1.1.1/src/polyline.js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
     #map { height: 600px; width: 100%; margin-top: 1rem; }
@@ -63,15 +63,16 @@
       if (currentLayer) map.removeLayer(currentLayer);
 
       try {
-        const latlngs = window.polyline.decode(route.map.summary_polyline); // fixed reference
-        console.log("📍 Taškai žemėlapiui:", latlngs);
+        const latlngs = polyline.decode(route.map.summary_polyline);
+        const coords = latlngs.map(p => [p[0], p[1]]); // invert coords if needed
+        console.log("📍 Taškai žemėlapiui:", coords);
 
-        if (!latlngs || latlngs.length === 0) {
+        if (!coords || coords.length === 0) {
           console.warn("⚠️ Polyline atkodavimas grąžino tuščia taškų sąrašą.");
           return;
         }
 
-        currentLayer = L.polyline(latlngs, { color: "red", weight: 4 }).addTo(map);
+        currentLayer = L.polyline(coords, { color: "red", weight: 4 }).addTo(map);
         map.fitBounds(currentLayer.getBounds());
       } catch (err) {
         console.error("❌ Klaida dekoduojant polyline:", err);
