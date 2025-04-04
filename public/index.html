@@ -1,75 +1,47 @@
 <!DOCTYPE html>
 <html lang="lt">
 <head>
-  <meta charset="UTF-8" />
-  <title>Strava + Windy (Vercel ready)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>Strava + Windy (Galutinai veikiantis)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    html, body, #windy { width: 100%; height: 100%; margin:0; padding:0; }
+    body, html, #windy { width: 100%; height: 100%; margin:0; padding:0; }
     #routeSelect {
       position:absolute; top:10px; left:10px; z-index:9999;
-      padding: 0.5rem; font-size: 1rem; border-radius:4px; border:1px solid #ccc;
+      padding:0.5rem; font-size:1rem; border-radius:4px; border:1px solid #ccc;
     }
   </style>
+  <script src="https://unpkg.com/@mapbox/polyline@1.1.1/src/polyline.js"></script>
 </head>
 <body>
-  <select id="routeSelect"><option>Įkeliami maršrutai...</option></select>
+  <select id="routeSelect"><option>Kraunami maršrutai...</option></select>
   <div id="windy"></div>
 
   <script>
-    function loadWindyAPI(callback) {
-      const script = document.createElement('script');
-      script.src = "https://api.windy.com/assets/map-forecast/libBoot.js";
-      script.onload = callback;
-      document.head.appendChild(script);
-    }
-
-    function loadPolyline(callback) {
-      const script = document.createElement('script');
-      script.src = "https://unpkg.com/@mapbox/polyline@1.1.1/src/polyline.js";
-      script.onload = callback;
-      document.head.appendChild(script);
-    }
-
-    loadPolyline(() => {
-      loadWindyAPI(initMap);
-    });
-
-    function initMap() {
-      windyInit({
-        key: 'pB51Zbb2Lz3JQ3j2lsidiIB6d2wlYny3',
-        lat: 55.0,
-        lon: 23.0,
-        zoom: 8,
-      }, windyAPI => {
-        const { map } = windyAPI;
-        loadRoutes(map);
-      });
-    }
-
     const select = document.getElementById("routeSelect");
     let currentLayer;
 
-    async function loadRoutes(map) {
-      const tokenRes = await fetch("https://stravawindy.onrender.com/token");
-      const { access_token, athlete_id } = await tokenRes.json();
-
-      const routesRes = await fetch(`https://www.strava.com/api/v3/athletes/${athlete_id}/routes`, {
-        headers: { Authorization: `Bearer ${access_token}` }
-      });
-
-      const routes = await routesRes.json();
-      select.innerHTML = "";
-
-      routes.forEach((route, idx) => {
-        const opt = document.createElement("option");
-        opt.value = idx;
-        opt.text = `${route.name} (${(route.distance / 1000).toFixed(1)} km)`;
-        select.add(opt);
-      });
-
-      if (routes.length > 0) showRoute(routes[0], map);
-      select.onchange = () => showRoute(routes[select.value], map);
+    function loadRoutes(map) {
+      fetch("https://stravawindy.onrender.com/token")
+        .then(res => res.json())
+        .then(({ access_token, athlete_id }) => {
+          return fetch(`https://www.strava.com/api/v3/athletes/${athlete_id}/routes`, {
+            headers: { Authorization: `Bearer ${access_token}` }
+          });
+        })
+        .then(res => res.json())
+        .then(routes => {
+          select.innerHTML = "";
+          routes.forEach((route, idx) => {
+            const opt = document.createElement("option");
+            opt.value = idx;
+            opt.text = `${route.name} (${(route.distance/1000).toFixed(1)} km)`;
+            select.add(opt);
+          });
+          if (routes.length > 0) showRoute(routes[0], map);
+          select.onchange = () => showRoute(routes[select.value], map);
+        })
+        .catch(console.error);
     }
 
     function showRoute(route, map) {
@@ -82,6 +54,25 @@
       currentLayer = L.polyline(coords, { color: "red", weight: 4 }).addTo(map);
       map.fitBounds(currentLayer.getBounds());
     }
+
+    function windyInitCallback(windyAPI) {
+      const { map } = windyAPI;
+      loadRoutes(map);
+    }
+
+    // Teisingas Windy API įkėlimas:
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://api.windy.com/assets/map-forecast/libBoot.js';
+    script.onload = () => {
+      windyInit({
+        key: 'pB51Zbb2Lz3JQ3j2lsidiIB6d2wlYny3',
+        lat: 55.0,
+        lon: 23.0,
+        zoom: 8,
+      }, windyInitCallback);
+    };
+    document.head.appendChild(script);
   </script>
 </body>
 </html>
