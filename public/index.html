@@ -3,7 +3,7 @@
 <html lang="lt">
 <head>
   <meta charset="UTF-8" />
-  <title>Strava + Vėjas</title>
+  <title>Strava + Vėjas (FIXED)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -63,7 +63,7 @@
       if (currentLayer) map.removeLayer(currentLayer);
 
       try {
-        const latlngs = L.Polyline.fromEncoded(route.map.summary_polyline).getLatLngs();
+        const latlngs = polyline.decode(route.map.summary_polyline); // fixed decoding
         console.log("📍 Taškai žemėlapiui:", latlngs);
 
         if (!latlngs || latlngs.length === 0) {
